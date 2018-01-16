@@ -1,0 +1,14 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "master"]
+	url = https://github.com/autio/mis
+	fetch = +refs/heads/*:refs/remotes/master/*
+[remote "origin"]
+	url = https://github.com/autio/mis.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master

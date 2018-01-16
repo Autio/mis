@@ -37,7 +37,7 @@ class RegisterForm(Form):
 def register():
     form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
-        x =1
+        return render_template('register.html', form=form)
         # What the user does in the form
     return render_template('register.html', form=form)
 

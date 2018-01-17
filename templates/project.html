@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<h1>Create Project</h1>
+{% from "includes/_formhelpers.html" import render_field %}
+<form method="POST" action="">
+<div class="form-group">
+{{render_field(form.projectName, class_="form-control")}}
+</div>
+<div class="form-group">
+{{render_field(form.projectStartDate, class_="form-control")}}
+</div>
+<div class="form-group">
+{{render_field(form.projectEndDate, class_="form-control")}}
+</div>
+<div class="form-group">
+{{render_field(form.projectCode, class_="form-control")}}
+</div>
+<p><input type ="submit" class="btn btn-primary" value="Submit"></p>
+</form>
+{% endblock %}

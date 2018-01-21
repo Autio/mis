@@ -2,4 +2,29 @@
 
 {% block body %}
   <h1>Dashboard <small>Welcome {{session.username}}</h1>
+    <a class="btn btn-success" href="/add_project">Add Project</a>
+    <hr>
+    <table class="table table-striped">
+    <tr>
+      <th>ID</th>
+      <th>Project name</th>
+      <th>Start date</th>
+      <th>End date</th>
+      <th>Project code</th>
+      <th>Project description</th>
+    </tr>
+
+    {% for project in projects %}
+    <tr>
+      <th>{{project.id}}</th>
+      <th>{{project.projectName}}</th>
+      <th>{{project.projectStartDate}}</th>
+      <th>{{project.projectEndDate}}</th>
+      <th>{{project.projectCode}}</th>
+      <th>{{project.projectDescription}}</th>
+      <td><a href="edit_project/{{project.id}}" class="btn btn-default pullright">Edit</a></td>
+      <td><a href="#" class="btn btn-danger pullright">Delete</a></td>
+    </tr>
+    {% endfor %}
+
 {% endblock %}

@@ -149,9 +149,26 @@ def logout():
 @app.route('/dashboard')
 @is_logged_in
 def dashboard():
-    return render_template('dashboard.html')
+    # Create cursor
+    cur = mysql.connection.cursor()
 
-@app.route('/project', methods=['GET', 'POST'])
+    # Get articles
+    result = cur.execute("SELECT * FROM projects")
+
+    projects = cur.fetchall()
+
+    if result > 0:
+        return render_template('dashboard.html', projects=projects)
+    else:
+        msg = 'No projects found'
+        return render_template('dashboard.html', msg=msg)
+
+    # Close connection
+    cur.close()
+
+
+@app.route('/add_project', methods=['GET', 'POST'])
+@is_logged_in
 def project():
     form = ProjectForm(request.form)
     if request.method == 'POST' and form.validate():
@@ -174,9 +191,9 @@ def project():
 
         flash('Project information has been stored', 'success')
 
-        redirect(url_for('index'))
+        redirect(url_for('dashboard'))
 
-    return render_template('project.html', form=form)
+    return render_template('add_project.html', form=form)
 
 if __name__ == '__main__':
     app.secret_key='secret123'

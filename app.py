@@ -4,6 +4,7 @@ from flask_mysqldb import MySQL
 from wtforms import Form, StringField, DateField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
+import csv
 
 app = Flask(__name__)
 
@@ -17,6 +18,18 @@ app.config['MYSQL_CURSORCLASS']='DictCursor'
 mysql = MySQL(app)
 
 Articles = Articles()
+language = 'English'
+languageFile = {}
+# Read in localisation
+#try:
+#    with open('localisation/English.csv', mode='r') as langfile:
+#        reader = csv.reader(langfile)
+#        with open('/localisation/tempfile.csv', mode'w') as outfile:
+#            writer = csv.writer(outfile)
+#        languageFile = {rows[0]:rows[1] for rows in reader}
+#        app.logger.info(languageFile)
+#except:
+#   app.logger.info("Error loading language file")
 
 # Index
 @app.route('/')
@@ -28,15 +41,6 @@ def index():
 def about():
     return render_template('about.html')
 
-# Articles
-@app.route ('/articles')
-def articles():
-    return render_template('articles.html', articles = Articles)
-
-# Single article
-@app.route ('/article/<string:id>/')
-def article(id):
-    return render_template('article.html', id=id)
 
 # Register form class
 class RegisterForm(Form):
@@ -54,7 +58,7 @@ class ProjectForm(Form):
     projectStartDate = DateField(u'Start date YYYY-MM-DD', validators=[validators.InputRequired()])
     projectEndDate = DateField(u'End date YYYY-MM-DD', validators=[validators.InputRequired()])
     projectCode = StringField(u'Project code', validators=[validators.Length(min=3, max=5)])
-    projectDescription = StringField(u'Project description', validators=[validators.Length(min=0, max=2000)])
+    projectDescription = StringField(u'Project description', validators=[validators.InputRequired()])
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -178,12 +182,13 @@ def project():
         projectStartDate = form.projectStartDate.data
         projectEndDate = form.projectEndDate.data
         projectCode = form.projectCode.data
+        projectDescription = form.projectDescription.data
 
         # Create cursor
         cur = mysql.connection.cursor()
 
         # Execute query
-        cur.execute("INSERT INTO projects(projectName, projectStartDate, projectEndDate, projectCode) VALUES(%s, %s, %s, %s)", (projectName, projectStartDate, projectEndDate, projectCode))
+        cur.execute("INSERT INTO projects(projectName, projectStartDate, projectEndDate, projectCode, projectDescription) VALUES(%s, %s, %s, %s, %s)", (projectName, projectStartDate, projectEndDate, projectCode, projectDescription))
 
         # Commit to DB
         mysql.connection.commit()
@@ -194,6 +199,52 @@ def project():
         redirect(url_for('dashboard'))
 
     return render_template('add_project.html', form=form)
+
+@app.route('/edit_project/<string:id>', methods=['GET', 'POST'])
+@is_logged_in
+def edit_project(id):
+    # Get Form
+    form = ProjectForm(request.form)
+
+    # retrieve the project, then edit it
+    cur = mysql.connection.cursor()
+
+    # get project by ID
+    result = cur.execute("SELECT * FROM projects WHERE id = %s", [id])
+
+    project = cur.fetchone()
+
+    # Populate project from fields
+    form.projectName.data = project['projectName']
+    form.projectStartDate.data = project['projectStartDate']
+    form.projectEndDate.data = project['projectEndDate']
+    form.projectCode.data = project['projectCode']
+    form.projectDescription.data = project['projectDescription']
+
+    if request.method == 'POST' and form.validate():
+
+        # What the user does in the form
+        projectName = form.projectName.data
+        projectStartDate = form.projectStartDate.data
+        projectEndDate = form.projectEndDate.data
+        projectCode = form.projectCode.data
+        projectDescription = form.projectDescription.data
+
+        # Create cursor
+        cur = mysql.connection.cursor()
+
+        # Execute query
+        cur.execute("UPDATE projects SET projectName=%s, projectStartDate=%s, projectEndDate=%s, projectCode=%s, projectDescription=%s WHERE id = %s", (projectName, projectStartDate, projectEndDate, projectCode, projectDescription, id))
+
+        # Commit to DB
+        mysql.connection.commit()
+        cur.close()
+        flash('Project information has been updated', 'success')
+
+        redirect(url_for('dashboard'))
+
+    return render_template('edit_project.html', form=form)
+
 
 if __name__ == '__main__':
     app.secret_key='secret123'

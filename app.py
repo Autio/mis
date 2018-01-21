@@ -3,6 +3,7 @@ from data import Articles
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, DateField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -17,22 +18,27 @@ mysql = MySQL(app)
 
 Articles = Articles()
 
+# Index
 @app.route('/')
 def index():
     return render_template('home.html')
 
+# About
 @app.route('/about')
 def about():
     return render_template('about.html')
 
+# Articles
 @app.route ('/articles')
 def articles():
     return render_template('articles.html', articles = Articles)
 
+# Single article
 @app.route ('/article/<string:id>/')
 def article(id):
     return render_template('article.html', id=id)
 
+# Register form class
 class RegisterForm(Form):
     name = StringField(u'Name', validators=[validators.Length(min=1, max=50)])
     username = StringField(u'Name', validators = [validators.Length(min=4, max= 25)])
@@ -117,6 +123,33 @@ def login():
             return render_template('login.html', error=error)
 
     return render_template('login.html')
+
+# Add decorator to prevent access from those who are not logged in
+# Check if the user is logged in
+def is_logged_in(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorised. Please log in.', 'danger')
+            return redirect(url_for('login'))
+        return wrapped
+    return wrap
+
+# Logout
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You are now logged out', 'success')
+    return redirect(url_for('login'))
+
+# Dashboard
+
+@app.route('/dashboard')
+@is_logged_in
+def dashboard():
+    return render_template('dashboard.html')
 
 @app.route('/project', methods=['GET', 'POST'])
 def project():

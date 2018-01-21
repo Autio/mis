@@ -17,8 +17,15 @@
         <li><a href="/project">Projects</a></li>
       </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="/register">Register</a></li>
-          <li><a href="/login">Login</a></li>
+          {% if session.logged_in %}
+            <li><a href="/logout">Log out</a></li>
+            <li><a href="/dashboard">Dashboard</a></li>
+
+          {% else %}
+            <li><a href="/register">Register</a></li>
+            <li><a href="/login">Login</a></li>
+          {% endif %}
+
         </ul>
     </div>
   </div>

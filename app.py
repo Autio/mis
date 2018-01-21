@@ -44,10 +44,11 @@ class RegisterForm(Form):
     confirm = PasswordField('Confirm Password')
 
 class ProjectForm(Form):
-    projectName = StringField(u'ProjectName', validators=[validators.Length(min=5, max=140)])
+    projectName = StringField(u'Project Name', validators=[validators.Length(min=5, max=140)])
     projectStartDate = DateField(u'Start date YYYY-MM-DD', validators=[validators.InputRequired()])
     projectEndDate = DateField(u'End date YYYY-MM-DD', validators=[validators.InputRequired()])
     projectCode = StringField(u'Project code', validators=[validators.Length(min=3, max=5)])
+    projectDescription = StringField(u'Project description', validators=[validators.Length(min=0, max=2000)])
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -75,6 +76,47 @@ def register():
         redirect(url_for('index'))
 
     return render_template('register.html', form=form)
+
+# User login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Get Form fields - not using wtforms since not needed
+        username = request.form['username']
+        # compare this against the real password
+        password_candidate = request.form['password']
+
+        # db connection
+        cur = mysql.connection.cursor()
+
+        # Get user by username
+        result = cur.execute("SELECT * FROM users where username = %s", [username])
+
+        if(result>0):
+            # Get stored hash
+            data = cur.fetchone()
+            password = data['password']
+
+            # Compare passwords
+            if sha256_crypt.verify(password_candidate, password):
+                # Passed
+                session['logged_in'] = True
+                session['username'] = username
+
+                flash('You are now logged in', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                app.logger.info('PASSWORD NOT MATCHED')
+                error = 'Invalid login'
+                return render_template('login.html', error=error)
+            # Close connection
+            cur.close()
+        else:
+            error = 'Username not found'
+            app.logger.info('NO USER FOUND')
+            return render_template('login.html', error=error)
+
+    return render_template('login.html')
 
 @app.route('/project', methods=['GET', 'POST'])
 def project():
